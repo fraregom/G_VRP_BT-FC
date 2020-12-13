@@ -5,10 +5,15 @@
 
 using namespace std;
 
-int main() {
+int main(int argc, char* argv[]) {
 
+    string filename;
 
-    ifstream myfile ("/Users/havok/Documents/Workspace.nosync/Proyecto_GVRP/Instancias/20c3sU1.txt");
+    if(argc > 0){
+        filename = argv[1];
+    }
+
+    ifstream myfile (filename);
     string delimiter = "   ";
 
     if (myfile.is_open())
