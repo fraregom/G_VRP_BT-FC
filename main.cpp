@@ -2,39 +2,50 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <vector>
+#include "Node.h"
 
 using namespace std;
+typedef vector <TNode> Node_list;
 
-int main() {
+struct GeneralInfo
+{
+    float Q;
+    float r;
+    float TL;
+    float v;
+};
 
+int main(int argc, char* argv[]) {
 
-    ifstream myfile ("/Users/havok/Documents/Workspace.nosync/Proyecto_GVRP/Instancias/20c3sU1.txt");
-    string delimiter = "   ";
+    string filename;
+    GeneralInfo status{};
+    Node_list node_vector;
 
-    if (myfile.is_open())
-    {
-        string line;
-        int count = 0;
-        while ( getline (myfile, line) )
-        {
-            if(count >= 1){
-                for (char &c : line) {
-                    if (c != ' ') {
-                        if (isupper(c)){
-                            cout << "------ Un nodo: ----" << endl;
-                        }
-                        cout << "One character: " << c << "\n";
-
-                    }
-                }
-            }
-            count += 1;
-        }
-        myfile.close();
+    if(argc > 0){
+        filename = argv[1];
     }
 
+    ifstream file (filename);
+    if (file.is_open())
+    {
+        string line;
+        string ID,Type;
+        float lgt,lat;
 
+        getline (file, line);
+        while ( file >> ID >> Type >> lgt >> lat)
+        {
+            TNode *Node = new TNode(ID, Type, lgt, lat);
+            node_vector.push_back(*Node);
+        }
+        file.close();
+    }
 
-    else printf("Unable to open file");
+    else printf("Existe un problema al abrir dicha instancia..");
+
+    for(TNode node : node_vector)
+        cout << node.Mostrar() << endl;
+
     return 0;
 }
