@@ -70,5 +70,6 @@ int main(int argc, char* argv[]) {
     cout << status.TL << endl;
     cout << status.v << endl;
 
+    cout << haversine_distance(node_vector[5], node_vector[6]) << endl;
     return 0;
 }
