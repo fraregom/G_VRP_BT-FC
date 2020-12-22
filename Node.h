@@ -9,10 +9,10 @@ class TNode {
     public:
         string ID;         // Propiedades
         string Type;
-        float Longitude;
-        float Latitude;
+        double Longitude;
+        double Latitude;
 
-        TNode(string id, string type, float lgt, float lat); // Constructor
+        TNode(string id, string type, double lgt, double lat); // Constructor
         string Mostrar(); //Metodos
 };
 

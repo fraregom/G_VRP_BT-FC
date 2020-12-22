@@ -3,4 +3,4 @@ project(Proyecto_GVRP)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Proyecto_GVRP main.cpp Node.cpp Node.h)
+add_executable(Proyecto_GVRP main.cpp Node.cpp Node.h auxiliar.cpp auxiliar.h)

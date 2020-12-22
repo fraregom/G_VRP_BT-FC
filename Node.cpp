@@ -1,8 +1,9 @@
 #include "Node.h"
+#include <utility>
 
-TNode::TNode(string id, string type, float lgt, float lat) { // Constructor
-    ID = id;
-    Type = type;
+TNode::TNode(string id, string type, double lgt, double lat) { // Constructor
+    ID = std::move(id);
+    Type = std::move(type);
     Longitude = lgt;
     Latitude = lat;
 }
