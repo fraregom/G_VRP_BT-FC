@@ -1,27 +1,16 @@
 #include <iostream>
-#include <cstdio>
 #include <fstream>
-#include <string>
-#include <vector>
-#include "Node.h"
-#include "auxiliar.h"
+#include "node.h"
+#include "functions.h"
 
 using namespace std;
-typedef vector <TNode> Node_list;
-
-struct GeneralInfo
-{
-    float Q;
-    float r;
-    float TL;
-    float v;
-};
 
 int main(int argc, char* argv[]) {
 
     string filename;
-    GeneralInfo status{};
-    Node_list node_vector;
+    IFWProblem ifwProblem {};
+    NodeList nodeList;
+    DistanceMatrix distanceMatrix;
 
     if(argc > 0){
         filename = argv[1];
@@ -31,45 +20,37 @@ int main(int argc, char* argv[]) {
 
     if (file.is_open())
     {
-        string line;
-        vector <float> aux;
+        string textLine;
+        vector <float> vectorAux;
 
-        getline (file, line);
-        while(getline (file, line))
+        getline (file, textLine);
+        while(getline (file, textLine))
         {
-            vector <string> parse = split_string(line,"\t");
-            int vectorLong = parse.size();
+            vector <string> parseResult = split_string(textLine, "\t");
+            int vectorLong = parseResult.size();
 
             if(vectorLong > 1) {
 
-                auto Node = new TNode(parse[0], parse[1],
-                                      stod(parse[2]), stod(parse[3]));
-                node_vector.push_back(*Node);
+                auto Node = new TNode(parseResult[0], parseResult[1],
+                                      stod(parseResult[2]), stod(parseResult[3]));
+                nodeList.push_back(*Node);
 
-            } else if (line != "\r") {
-                vector <string> parse2 = split_string(line,"/");
-                aux.push_back(stof(parse2[1]));
+            } else if (textLine != "\r") {
+                vector <string> parseResult2 = split_string(textLine, "/");
+                vectorAux.push_back(stof(parseResult2[1]));
             }
         }
 
-        status.Q = aux[0];
-        status.r = aux[1];
-        status.TL = aux[2];
-        status.v = aux[3];
+        ifwProblem.Q = vectorAux[0];
+        ifwProblem.r = vectorAux[1];
+        ifwProblem.TL = vectorAux[2];
+        ifwProblem.v = vectorAux[3];
+        ifwProblem.m = vectorAux[4];
 
+        distanceMatrix = distance_matrix(nodeList);
         file.close();
     }
 
     else printf("Existe un problema al abrir dicha instancia..");
-
-    for(TNode node : node_vector)
-        cout << node.Mostrar() << endl;
-
-    cout << status.Q << endl;
-    cout << status.r << endl;
-    cout << status.TL << endl;
-    cout << status.v << endl;
-
-    cout << haversine_distance(node_vector[5], node_vector[6]) << endl;
     return 0;
 }

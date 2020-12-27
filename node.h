@@ -2,6 +2,7 @@
 #define PROYECTO_GVRP_NODE_H
 
 #include <string>
+
 using namespace std;
 
 class TNode {
