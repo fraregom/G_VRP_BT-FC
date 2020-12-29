@@ -7,8 +7,4 @@ TNode::TNode(string id, string type, double lgt, double lat) { // Constructor
     Latitude = lat;
 }
 
-string TNode::Mostrar (){ // Métodos
-    return ID;
-};
-
 

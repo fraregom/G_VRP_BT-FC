@@ -39,6 +39,18 @@ double haversine_distance(TNode &sNode, TNode &eNode){
     return distance;
 }
 
+double simple_distance(TNode &sNode, TNode &eNode)
+{
+    double x1 = sNode.Longitude;
+    double y1 = sNode.Latitude;
+    double x2 = eNode.Longitude;
+    double y2 = eNode.Latitude;
+
+    // Calculating distance
+    return sqrt(pow(x2 - x1, 2) +
+                pow(y2 - y1, 2) * 1.0);
+}
+
 vector<vector<double>> distance_matrix(vector<TNode> &nodes){
 
     vector<vector<double>> matrix ( nodes.size(), vector<double>( nodes.size()));
@@ -47,7 +59,8 @@ vector<vector<double>> distance_matrix(vector<TNode> &nodes){
     {
         for (int j = 0; j < nodes.size(); j++)
         {
-            matrix[i][j] = haversine_distance(nodes[i],nodes[j]);
+            //matrix[i][j] = haversine_distance(nodes[i],nodes[j]);
+            matrix[i][j] = simple_distance(nodes[i],nodes[j]);
         }
     }
 
