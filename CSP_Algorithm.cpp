@@ -47,7 +47,7 @@ double fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMat
     return 0;
 }
 
-tuple<double,vector<int>> shortest_path(IFWProblem info,vector<TNode> &nodesArray,
+/*tuple<double,vector<int>> shortest_path(IFWProblem info,vector<TNode> &nodesArray,
                                         vector<vector <double>> &distanceMatrix)
 {
     /// Picking a source city
@@ -96,6 +96,7 @@ tuple<double,vector<int>> shortest_path(IFWProblem info,vector<TNode> &nodesArra
                             path_weight += actual_distance + distanceToRecharge;
                             j = client;
                         } else {
+                            error = true;
                             break;
                         }
                     }
@@ -123,4 +124,76 @@ tuple<double,vector<int>> shortest_path(IFWProblem info,vector<TNode> &nodesArra
         }
     }
     return make_tuple(shortest_path, bestTour);
+}*/
+
+void swap(int *a, int *b)
+{
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void G_VRP_Backtracking(vector<vector<double>> &adjMatrix, int order,
+                        vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour,
+                        double *partial_tour_cost, int level, int &count)
+{
+    if (level == order - 1) {
+        double tour_cost = *partial_tour_cost
+                           + adjMatrix[partial_tour[order - 2]][partial_tour[order - 1]]
+                           + adjMatrix[partial_tour[order - 1]][0];
+
+        if (*best_tour_cost == 0 || tour_cost < *best_tour_cost) {
+            best_tour = partial_tour;
+            *best_tour_cost = tour_cost;
+        }
+    }
+    else {
+
+        for (int i = level; i < order; i++) {
+
+            if (*best_tour_cost == 0
+                || *partial_tour_cost + adjMatrix[partial_tour[level - 1]][partial_tour[i]]
+                   < *best_tour_cost)
+            {
+
+                swap(&partial_tour[level], &partial_tour[i]);
+
+                double cost = adjMatrix[partial_tour[level - 1]][partial_tour[level]];
+                *partial_tour_cost += cost;
+                ++count;
+                /*if(count == 1){
+                    vector<int> partial_tour2 = partial_tour;
+                    partial_tour2.insert(partial_tour2.begin()+i,1);
+
+                    //partial_tour2.insert(partial_tour2.begin(), partial_tour.begin(), partial_tour.end());
+                    G_VRP_Backtracking(adjMatrix, order + 1, best_tour, best_tour_cost,
+                                       partial_tour2, partial_tour_cost, level + 1, count);
+                } else {*/
+                G_VRP_Backtracking(adjMatrix, order, best_tour, best_tour_cost,
+                                       partial_tour, partial_tour_cost, level + 1, count);
+                //}
+                *partial_tour_cost -= cost;
+                swap(&partial_tour[level], &partial_tour[i]);
+            }
+        }
+    }
+}
+
+double G_VRP(vector<vector<double>> &adjMatrix, int order,
+                          vector<int> &best_tour, int &count)
+{
+    double best_tour_cost = 0;
+    double partial_tour_cost = 0;
+    vector<int> partial_tour;
+
+    for (int i = 0; i < order; i++) {
+        if(i!=1) partial_tour.push_back(i);
+    }
+
+    G_VRP_Backtracking(adjMatrix, partial_tour.size(), best_tour, &best_tour_cost, partial_tour,
+                       &partial_tour_cost, 1, count);
+
+
+
+    return best_tour_cost;
 }

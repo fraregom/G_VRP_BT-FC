@@ -64,19 +64,32 @@ int main(int argc, char* argv[]) {
 
         cout << "---" << endl;
 
-        tuple<double,vector<int>> result = shortest_path(ifwProblem,nodeList,distanceMatrix);
-        cout << get<0>(result) << endl;
+        vector<int> best_tour;
+        int count = 0;
+        double cost = G_VRP(distanceMatrix, distanceMatrix.size(), best_tour, count);
 
-        cout << "---" << endl;
+        printf("Costo del mejor tour: %f\n", cost);
+        printf("Vertices:\n");
+        for (int i : best_tour) {
+            printf("%u ", i);
+        }
 
-        vector<int> trip = get<1>(result);
+        printf("\nCoste por arco:\n");
+        for (int i = 0; i < best_tour.size() - 1; i++) {
+            printf("%f ", distanceMatrix[best_tour[i]][best_tour[i + 1]]);
+        }
+        printf("%f\n", distanceMatrix[best_tour[best_tour.size() - 1]][0]);
+
+        printf("---- \nNum. llamadas recursivas: %u \n", count);
+
+        /*tuple<double,vector<int>> result = shortest_path(ifwProblem,nodeList,distanceMatrix);
+        cout << get<0>(result) << endl;*/
+        /*vector<int> trip = get<1>(result);
         for (int i : trip) {
             cout << nodeList[i].ID;
             cout << " ";
         }
-        cout << endl;
-
-        cout << "---" << endl;
+        cout << endl;*/
 
     }
 
