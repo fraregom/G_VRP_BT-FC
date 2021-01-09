@@ -13,27 +13,36 @@ vector<double> costArc(struct IFWProblem info, double distance){
     return result;
 }
 
-enum STATE evaluator(struct IFWProblem &info, double distance){
+enum STATE evaluatorFunction(struct IFWProblem &info, double best_tour_cost, double distanceEval){
 
-    vector<double> costs = costArc(info, distance);
+    vector<double> costs = costArc(info, distanceEval);
+
+    if(distanceEval < best_tour_cost) return WORST_ROUTE;
 
     if( info.Q > costs[0] && info.TL > costs[1]){
+
         info.Q -= costs[0];
         info.TL -= costs[1];
-        return SUCCESS;
-    } else {
-        if(info.TL < costs[1]) return TIME_OUT;
 
-        return NO_GAS;
-    }
+        return BETTER_ROUTE;
+
+    } else if (info.TL < costs[1]) return TIME_OUT;
+
+    return NO_GAS;
 }
 
-double fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
-        vector<int> &gasStations, int currPos){
+tuple<int,double> fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
+                    vector<int> &AFS_nodes, int currPos){
 
+    int indexAFS = 0;
     double nearestStation = DBL_MAX;
-    for(int gasStation : gasStations){
-        nearestStation = min (nearestStation, distanceMatrix[currPos][gasStation]);
+    for(int gasStation : AFS_nodes){
+        int distanceTemp = distanceMatrix[currPos][gasStation];
+
+        if( distanceTemp < nearestStation){
+            nearestStation = distanceTemp;
+            indexAFS = gasStation;
+        }
     }
 
     vector<double> costs = costArc(info, nearestStation);
@@ -41,90 +50,12 @@ double fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMat
     if( info.Q > costs[0] && info.TL > costs[1]) {
         info.Q = 60;
         info.TL -= costs[1];
-        return nearestStation;
+
+        return make_tuple(indexAFS, nearestStation);
     }
 
-    return 0;
+    return make_tuple(0, 0);
 }
-
-/*tuple<double,vector<int>> shortest_path(IFWProblem info,vector<TNode> &nodesArray,
-                                        vector<vector <double>> &distanceMatrix)
-{
-    /// Picking a source city
-    int source = 0;
-
-    double shortest_path = DBL_MAX;
-    vector<int> bestTour;
-    vector<int> clients;
-    vector<int> gasStations;
-
-    /// pushing the rest num_nodes-1 cities into a bundle
-    for(int i=0;i<nodesArray.size();i++)
-    {
-        if(i != source && nodesArray[i].Type != "f")
-        {
-            clients.push_back(i);
-        } else {
-            gasStations.push_back(i);
-        }
-    }
-
-    /// generating permutations and tracking the minimum cost
-    while(next_permutation(clients.begin(),clients.end()))
-    {
-        double path_weight = 0;
-        int j = source;
-
-        IFWProblem aux = info;
-        bool error = false;
-
-        for (int client : clients)
-        {
-            double actual_distance = distanceMatrix[j][client];
-            enum STATE state = evaluator(aux,actual_distance);
-
-            switch(state){
-                case NO_GAS:
-                    {
-                        cout << "NO GAS" << endl;
-                        for (int client2: clients){
-                            cout << nodesArray[client2].ID;
-                        }
-                        cout << endl;
-                        double distanceToRecharge = fuelRecharge(aux, distanceMatrix, gasStations, j);
-                        if (distanceToRecharge > 0){
-                            path_weight += actual_distance + distanceToRecharge;
-                            j = client;
-                        } else {
-                            error = true;
-                            break;
-                        }
-                    }
-                case TIME_OUT:
-                    cout << "Time OUT" << endl;
-                    for (int client2: clients){
-                        cout << nodesArray[client2].ID;
-                    }
-                    cout << endl;
-                    error = true;
-                    break;
-                case SUCCESS:
-                    path_weight += actual_distance;
-                    j = client;
-            }
-
-        }
-
-        if(!error) {
-            path_weight += distanceMatrix[j][source];
-            if (path_weight < shortest_path) {
-                bestTour = clients;
-                shortest_path = path_weight;
-            }
-        }
-    }
-    return make_tuple(shortest_path, bestTour);
-}*/
 
 void swap(int *a, int *b)
 {
@@ -133,11 +64,29 @@ void swap(int *a, int *b)
     *b = temp;
 }
 
-void G_VRP_Backtracking(vector<vector<double>> &adjMatrix, int order,
-                        vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour,
-                        double *partial_tour_cost, int level, int &count)
+vector<int> insertAFS(vector<int> &partial_tour, int index, int AFSIndex){
+
+    vector<int> split_lo(partial_tour.begin(), partial_tour.begin() + index);
+    split_lo.push_back(AFSIndex);
+
+    vector<int> split_hi(partial_tour.begin() + index, partial_tour.end());
+
+    vector<int> partial_tour2;
+    split_lo.insert(split_lo.end(), split_hi.begin(), split_hi.end());
+
+    partial_tour2 = split_lo;
+
+    split_lo.clear();
+    split_hi.clear();
+
+    return partial_tour2;
+}
+
+void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem info, int order,
+                 vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour,
+                 vector<int> &AFS_nodes, double *partial_tour_cost, int level, int &count)
 {
-    if (level == order - 1) {
+    if (level == order-1) {
         double tour_cost = *partial_tour_cost
                            + adjMatrix[partial_tour[order - 2]][partial_tour[order - 1]]
                            + adjMatrix[partial_tour[order - 1]][0];
@@ -147,13 +96,15 @@ void G_VRP_Backtracking(vector<vector<double>> &adjMatrix, int order,
             *best_tour_cost = tour_cost;
         }
     }
+
     else {
 
         for (int i = level; i < order; i++) {
 
-            if (*best_tour_cost == 0
-                || *partial_tour_cost + adjMatrix[partial_tour[level - 1]][partial_tour[i]]
-                   < *best_tour_cost)
+            double distanceTemp = *partial_tour_cost + adjMatrix[partial_tour[level - 1]][partial_tour[i]];
+            enum STATE status = evaluatorFunction(info, *best_tour_cost, distanceTemp);
+
+            if(*best_tour_cost == 0 || status == BETTER_ROUTE)
             {
 
                 swap(&partial_tour[level], &partial_tour[i]);
@@ -161,39 +112,69 @@ void G_VRP_Backtracking(vector<vector<double>> &adjMatrix, int order,
                 double cost = adjMatrix[partial_tour[level - 1]][partial_tour[level]];
                 *partial_tour_cost += cost;
                 ++count;
-                /*if(count == 1){
-                    vector<int> partial_tour2 = partial_tour;
-                    partial_tour2.insert(partial_tour2.begin()+i,1);
 
-                    //partial_tour2.insert(partial_tour2.begin(), partial_tour.begin(), partial_tour.end());
-                    G_VRP_Backtracking(adjMatrix, order + 1, best_tour, best_tour_cost,
-                                       partial_tour2, partial_tour_cost, level + 1, count);
-                } else {*/
-                G_VRP_Backtracking(adjMatrix, order, best_tour, best_tour_cost,
-                                       partial_tour, partial_tour_cost, level + 1, count);
-                //}
+                G_VRP_BT_FC(adjMatrix, info, order, best_tour, best_tour_cost,
+                            partial_tour, AFS_nodes, partial_tour_cost, level + 1, count);
+
                 *partial_tour_cost -= cost;
                 swap(&partial_tour[level], &partial_tour[i]);
+            }
+            else if (status == NO_GAS){
+
+                swap(&partial_tour[level], &partial_tour[i]);
+
+                tuple<int,double> results = fuelRecharge(info,adjMatrix,AFS_nodes, partial_tour[level - 1]);
+
+                double cost =  get<1>(results);
+                *partial_tour_cost += cost;
+                ++count;
+
+                vector<int> partial_tour2 = insertAFS(partial_tour, partial_tour[level - 1], get<0>(results));
+
+                G_VRP_BT_FC(adjMatrix, info, order + 1, best_tour, best_tour_cost,
+                            partial_tour2, AFS_nodes,partial_tour_cost, level + 1, count);
+
+                *partial_tour_cost -= cost;
+                swap(&partial_tour[level], &partial_tour[i]);
+
             }
         }
     }
 }
 
-double G_VRP(vector<vector<double>> &adjMatrix, int order,
+double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFWProblem &info, int order,
                           vector<int> &best_tour, int &count)
 {
     double best_tour_cost = 0;
     double partial_tour_cost = 0;
-    vector<int> partial_tour;
+    vector<int> clients;
+    vector<int> AFS_nodes;
 
     for (int i = 0; i < order; i++) {
-        if(i!=1) partial_tour.push_back(i);
+        if(nodes[i].Type != "f"){
+            clients.push_back(i);
+        } else {
+            AFS_nodes.push_back(i);
+        }
     }
 
-    G_VRP_Backtracking(adjMatrix, partial_tour.size(), best_tour, &best_tour_cost, partial_tour,
-                       &partial_tour_cost, 1, count);
+    /*clients.push_back(0);
+    clients.push_back(1);
+    clients.push_back(2);
+    clients.push_back(3);
+    clients.push_back(4);
+    clients.push_back(5);
+    clients.push_back(6);
 
+    AFS_nodes.push_back(7);
+    AFS_nodes.push_back(8);
+    AFS_nodes.push_back(9);*/
 
+    G_VRP_BT_FC(adjMatrix, info, clients.size(), best_tour, &best_tour_cost, clients, AFS_nodes,
+                &partial_tour_cost, 1, count);
+
+    clients.clear();
+    AFS_nodes.clear();
 
     return best_tour_cost;
 }

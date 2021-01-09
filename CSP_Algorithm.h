@@ -1,7 +1,3 @@
-//
-// Created by Francisco Reyes Gómez on 29-12-20.
-//
-
 #ifndef PROYECTO_GVRP_CSP_ALGORITHM_H
 #define PROYECTO_GVRP_CSP_ALGORITHM_H
 
@@ -17,20 +13,21 @@ using namespace std;
 enum STATE{
     NO_GAS,
     TIME_OUT,
-    SUCCESS
+    BETTER_ROUTE,
+    WORST_ROUTE
 };
 
 vector<double> costArc(struct IFWProblem info, double distance);
-enum STATE evaluator(struct IFWProblem &info, double distance);
-double fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix, vector<int> &gasStations, int currPos);
-/*tuple<double,vector<int>> shortest_path(IFWProblem info, vector<TNode> &nodeArray,
-                                        vector<vector <double>> &distanceMatrix);*/
+enum STATE evaluatorFunction(struct IFWProblem &info, double best_tour_cost, double distanceEval);
+tuple<int,double>  fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix, vector<int> &AFS_nodes, int currPos);
 
 void swap(int *a, int *b);
-void G_VRP_Backtracking(vector<vector<double>> &adjMatrix, int order,
-                        vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour,
+vector<int> insertAFS(vector<int> &partial_tour, int index, int AFSIndex);
+
+void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, struct IFWProblem &info, int order,
+                        vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour, vector<int> &AFS_nodes,
                         double *partial_tour_cost, int level);
-double G_VRP(vector<vector<double>> &adjMatrix, int order,
+double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFWProblem &info, int order,
                           vector<int> &best_tour, int &count);
 
 

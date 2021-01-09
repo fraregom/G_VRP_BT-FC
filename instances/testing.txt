@@ -5,8 +5,8 @@ C1	c	3.0	2.0
 C2	c	3.2	5.0
 C3	c	6.0	-3.0
 
-Q Vehicle fuel tank capacity /8/
-r fuel consumption rate /0.5/
-TL TourLength /10/
-v average Velocity /5/
+Q Vehicle fuel tank capacity /50/
+r fuel consumption rate /0.2/
+TL TourLength /11/
+v average Velocity /50/
 m numVeh /3/
