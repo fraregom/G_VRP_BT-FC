@@ -51,9 +51,9 @@ int main(int argc, char* argv[]) {
         file.close();
         vectorAux.clear();
 
-        distanceMatrix = distance_matrix(nodeList);
+        //distanceMatrix = distance_matrix(nodeList);
 
-        /*distanceMatrix = {
+        distanceMatrix = {
                 {0,  148,  55,  32,  70, 140,  73,  60,  45, 75},
                 {148,  0,  93, 180,  99,  12,  72, 102,  80, 40},
                 {55,  93,   0,  85,  20,  83,  28,  45,  75, 90},
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
                 {60, 102,  45,  90,  25,  89,  50,   0, 100, 82},
                 {45,  80,  75,  50,  60,  55,  85, 100,   0, 58},
                 {75,  40,  90,  93,  55,  80,  64,  82,  82,  0}
-        };*/
+        };
 
         int size = distanceMatrix.size();
 
@@ -82,13 +82,13 @@ int main(int argc, char* argv[]) {
 
         vector<int> best_tour;
         int count = 0;
-        double cost = G_VRP(distanceMatrix, nodeList,ifwProblem, distanceMatrix.size(), best_tour, count);
+        double cost = G_VRP(distanceMatrix, nodeList,ifwProblem, best_tour, count);
 
         printf("Costo del mejor tour: %f\n", cost);
 
         printf("Vertices:\n");
-        for (int i : best_tour) {
-            printf("%s ", nodeList[i].ID.c_str());
+        for(int i : best_tour){
+            printf("%u ", i);
         }
         printf("D\n");
 
