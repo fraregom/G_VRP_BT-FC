@@ -4,8 +4,12 @@
 #include "functions.h"
 #include "CSP_Algorithm.h"
 
-using namespace std;
-
+/*!
+ *
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char* argv[]) {
 
     string filename;
@@ -51,9 +55,9 @@ int main(int argc, char* argv[]) {
         file.close();
         vectorAux.clear();
 
-        //distanceMatrix = distance_matrix(nodeList);
+        distanceMatrix = distance_matrix(nodeList);
 
-        distanceMatrix = {
+        /*distanceMatrix = {
                 {0,  148,  55,  32,  70, 140,  73,  60,  45, 75},
                 {148,  0,  93, 180,  99,  12,  72, 102,  80, 40},
                 {55,  93,   0,  85,  20,  83,  28,  45,  75, 90},
@@ -64,7 +68,7 @@ int main(int argc, char* argv[]) {
                 {60, 102,  45,  90,  25,  89,  50,   0, 100, 82},
                 {45,  80,  75,  50,  60,  55,  85, 100,   0, 58},
                 {75,  40,  90,  93,  55,  80,  64,  82,  82,  0}
-        };
+        };*/
 
         int size = distanceMatrix.size();
 
@@ -105,6 +109,6 @@ int main(int argc, char* argv[]) {
         distanceMatrix.clear();
     }
 
-    else printf("Existe un problema al abrir dicha instancia..");
+    else printf("Existe un problema al abrir dicha instancia, revise que este correctamente escrita..");
     return 0;
 }

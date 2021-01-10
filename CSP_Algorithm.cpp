@@ -1,5 +1,11 @@
 #include "CSP_Algorithm.h"
 
+/*!
+ *
+ * @param info
+ * @param distance
+ * @return
+ */
 tuple<double, double> costArc(struct IFWProblem info, double distance){
 
     double fuelUsed = info.r * distance;
@@ -8,6 +14,11 @@ tuple<double, double> costArc(struct IFWProblem info, double distance){
     return make_tuple(fuelUsed, timeUsed);
 }
 
+/*!
+ *
+ * @param info
+ * @param distance
+ */
 void applyCharges (struct IFWProblem &info, double distance){
 
     tuple<double, double> costs = costArc(info, distance);
@@ -15,6 +26,16 @@ void applyCharges (struct IFWProblem &info, double distance){
     info.TL -= get<1>(costs);
 }
 
+/*!
+ *
+ * @param info
+ * @param distanceMatrix
+ * @param clients
+ * @param best_tour_cost
+ * @param partial_tour_cost
+ * @param currPos
+ * @return
+ */
 tuple<vector<int>, vector<int>, vector<int>> evaluatorFunction (struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
         vector<int> &clients, double best_tour_cost, double partial_tour_cost, int currPos){
 
@@ -27,11 +48,11 @@ tuple<vector<int>, vector<int>, vector<int>> evaluatorFunction (struct IFWProble
         double distanceEval = distanceMatrix[currPos][client];
         tuple<double, double> costs = costArc(info, distanceEval);
 
-        //if((distanceEval + partial_tour_cost) > best_tour_cost) worstNodes.push_back(client);
+        if(((distanceEval + partial_tour_cost) > best_tour_cost) && best_tour_cost != 0) worstNodes.push_back(client);
 
-        if (info.Q > get<0>(costs) && info.TL > get<1>(costs)) candidatesNodes.push_back(client);
+        else if (info.Q > get<0>(costs) && info.TL > get<1>(costs)) candidatesNodes.push_back(client);
 
-        else if (info.TL < get<1>(costs)) worstNodes.push_back(client);
+        else if (info.TL <= get<1>(costs)) worstNodes.push_back(client);
 
         else AFSRequiredNodes.push_back(client);
 
@@ -40,6 +61,15 @@ tuple<vector<int>, vector<int>, vector<int>> evaluatorFunction (struct IFWProble
     return make_tuple(candidatesNodes, AFSRequiredNodes, worstNodes);
 }
 
+
+/*!
+ *
+ * @param info
+ * @param distanceMatrix
+ * @param AFS_nodes
+ * @param currPos
+ * @return
+ */
 tuple <int, double> fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
                     vector<int> &AFS_nodes, int currPos){
 
@@ -74,6 +104,19 @@ tuple <int, double> fuelRecharge(struct IFWProblem &info, vector<vector<double>>
     return make_tuple(0, 0);
 }
 
+
+/*!
+ *
+ * @param adjMatrix
+ * @param info
+ * @param clients
+ * @param AFS_nodes
+ * @param best_tour
+ * @param best_tour_cost
+ * @param partial_tour
+ * @param partial_tour_cost
+ * @param count
+ */
 void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem &info, vector<int> &clients, vector<int> &AFS_nodes,
                  vector<int> &best_tour, double &best_tour_cost, vector<int> &partial_tour, double &partial_tour_cost,
                  int &count)
@@ -148,7 +191,7 @@ void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem &info, vector<int
                 vector<int> clients_temp = clients;
                 vector<int> partial_tour_temp = partial_tour;
 
-                applyCharges(info, cost_temp + distanceTemp);
+                applyCharges(info, distanceTemp);
 
                 partial_tour_cost += (cost_temp + distanceTemp);
                 partial_tour.push_back(AFS_index);
@@ -170,6 +213,15 @@ void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem &info, vector<int
     }
 }
 
+/*!
+ *
+ * @param adjMatrix
+ * @param nodes
+ * @param info
+ * @param best_tour
+ * @param count
+ * @return
+ */
 double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFWProblem &info,
                           vector<int> &best_tour, int &count)
 {
@@ -181,15 +233,15 @@ double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFW
 
     partial_tour.push_back(0); //Comenzamos en el nodo DEPOT (index 0)
 
-    /*for (int i = 1; i < nodes.size(); i++) {
+    for (int i = 1; i < nodes.size(); i++) {
         if(nodes[i].Type != "f"){
             clients.push_back(i);
         } else {
             AFS_nodes.push_back(i);
         }
-    }*/
+    }
 
-    clients.push_back(1);
+    /*clients.push_back(1);
     clients.push_back(2);
     clients.push_back(3);
     clients.push_back(4);
@@ -198,7 +250,7 @@ double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFW
 
     AFS_nodes.push_back(7);
     AFS_nodes.push_back(8);
-    AFS_nodes.push_back(9);
+    AFS_nodes.push_back(9);*/
 
     G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
                 partial_tour, partial_tour_cost, count);

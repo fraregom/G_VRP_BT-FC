@@ -1,5 +1,11 @@
 #include "functions.h"
 
+/*!
+ *
+ * @param str
+ * @param delimiter
+ * @return
+ */
 vector<string> split_string(const string& str,
                                  const string& delimiter)
 {
@@ -19,11 +25,22 @@ vector<string> split_string(const string& str,
     return strings;
 }
 
+/*!
+ *
+ * @param degree
+ * @return
+ */
 double to_radians(double degree)
 {
     return(degree / 57.29578);
 }
 
+/*!
+ *
+ * @param sNode
+ * @param eNode
+ * @return
+ */
 double haversine_distance(TNode &sNode, TNode &eNode){
 
     double dLat = to_radians(eNode.Latitude - sNode.Latitude);
@@ -51,6 +68,11 @@ double simple_distance(TNode &sNode, TNode &eNode)
                 pow(y2 - y1, 2) * 1.0);
 }
 
+/*!
+ *
+ * @param nodes
+ * @return
+ */
 vector<vector<double>> distance_matrix(vector<TNode> &nodes){
 
     vector<vector<double>> matrix ( nodes.size(), vector<double>( nodes.size()));
