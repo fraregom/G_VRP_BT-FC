@@ -1,70 +1,86 @@
 #include "CSP_Algorithm.h"
 
-vector<double> costArc(struct IFWProblem info, double distance){
-
-    vector<double> result;
+tuple<double, double> costArc(struct IFWProblem info, double distance){
 
     double fuelUsed = info.r * distance;
     double timeUsed = distance / info.v;
 
-    result.push_back(fuelUsed);
-    result.push_back(timeUsed);
-
-    return result;
+    return make_tuple(fuelUsed, timeUsed);
 }
 
-enum STATE evaluatorFunction(struct IFWProblem &info, double best_tour_cost, double distanceEval){
+void applyCharges (struct IFWProblem &info, double distance){
 
-    vector<double> costs = costArc(info, distanceEval);
-
-    if(distanceEval < best_tour_cost) return WORST_ROUTE;
-
-    if( info.Q > costs[0] && info.TL > costs[1]){
-
-        info.Q -= costs[0];
-        info.TL -= costs[1];
-
-        return BETTER_ROUTE;
-
-    } else if (info.TL < costs[1]) return TIME_OUT;
-
-    return NO_GAS;
+    tuple<double, double> costs = costArc(info, distance);
+    info.Q -= get<0>(costs);
+    info.TL -= get<1>(costs);
 }
 
-tuple<int,double> fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
-                    vector<int> &AFS_nodes, int currPos){
+tuple<vector<int>, vector<int>, vector<int>> evaluatorFunction (struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
+        vector<int> &clients, double best_tour_cost, int currPos){
+
+    vector<int> worstNodes;
+    vector<int> candidatesNodes;
+    vector<int> AFSRequiredNodes;
+
+    for(int client: clients){
+
+        double distanceEval = distanceMatrix[currPos][client];
+        tuple<double, double> costs = costArc(info, distanceEval);
+
+        if(distanceEval < best_tour_cost) worstNodes.push_back(client);
+
+        else if (info.Q > get<0>(costs) && info.TL > get<1>(costs)) candidatesNodes.push_back(client);
+
+        else if (info.TL < get<1>(costs)) worstNodes.push_back(client);
+
+        else AFSRequiredNodes.push_back(client);
+
+    }
+
+    return make_tuple(candidatesNodes, AFSRequiredNodes, worstNodes);
+}
+
+tuple <int, double> fuelRecharge(struct IFWProblem &info, vector<vector<double>> &distanceMatrix,
+                    vector<int> &AFS_nodes, int currPos, int finalPos){
 
     int indexAFS = 0;
     double nearestStation = DBL_MAX;
-    for(int gasStation : AFS_nodes){
-        int distanceTemp = distanceMatrix[currPos][gasStation];
+
+    if(AFS_nodes.empty()){
+        return make_tuple(0, 0);
+    }
+
+    for(int AFS_node : AFS_nodes){
+        double distanceTemp = distanceMatrix[currPos][AFS_node];
 
         if( distanceTemp < nearestStation){
             nearestStation = distanceTemp;
-            indexAFS = gasStation;
+            indexAFS = AFS_node;
         }
     }
 
-    vector<double> costs = costArc(info, nearestStation);
+    double distanceTotal = nearestStation + distanceMatrix[currPos][finalPos];
+    tuple<double,double> costs = costArc(info, distanceTotal);
 
-    if( info.Q > costs[0] && info.TL > costs[1]) {
-        info.Q = 60;
-        info.TL -= costs[1];
+    if( info.Q > get<0>(costs) && info.TL > get<1>(costs)) {
 
-        return make_tuple(indexAFS, nearestStation);
+        AFS_nodes.erase(remove(AFS_nodes.begin(), AFS_nodes.end(), indexAFS),
+                                AFS_nodes.end());
+
+        return make_tuple(indexAFS, distanceTotal);
     }
 
     return make_tuple(0, 0);
 }
 
-void swap(int *a, int *b)
+/*void swap(int *a, int *b)
 {
     int temp = *a;
     *a = *b;
     *b = temp;
-}
+}*/
 
-vector<int> insertAFS(vector<int> &partial_tour, int index, int AFSIndex){
+/*vector<int> insertAFS(vector<int> &partial_tour, int index, int AFSIndex){
 
     vector<int> split_lo(partial_tour.begin(), partial_tour.begin() + index);
     split_lo.push_back(AFSIndex);
@@ -80,65 +96,154 @@ vector<int> insertAFS(vector<int> &partial_tour, int index, int AFSIndex){
     split_hi.clear();
 
     return partial_tour2;
-}
+}*/
 
-void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem info, int order,
-                 vector<int> &best_tour, double *best_tour_cost, vector<int> &partial_tour,
-                 vector<int> &AFS_nodes, double *partial_tour_cost, int level, int &count)
+void G_VRP_BT_FC(vector<vector<double>> &adjMatrix, IFWProblem info, vector<int> &clients, vector<int> &AFS_nodes,
+                 vector<int> &best_tour, double &best_tour_cost, vector<int> &partial_tour, double &partial_tour_cost,
+                 int level, int order, int &count)
 {
     if (level == order-1) {
-        double tour_cost = *partial_tour_cost
-                           + adjMatrix[partial_tour[order - 2]][partial_tour[order - 1]]
-                           + adjMatrix[partial_tour[order - 1]][0];
+        double tour_cost = partial_tour_cost +
+                           //+ adjMatrix[partial_tour[order - 2]][partial_tour[order - 1]]
+                           + adjMatrix[partial_tour.back()][0]; //Revisar denuevo si es factible?
 
-        if (*best_tour_cost == 0 || tour_cost < *best_tour_cost) {
+        if (best_tour_cost == 0 || tour_cost < best_tour_cost) {
             best_tour = partial_tour;
-            *best_tour_cost = tour_cost;
+            best_tour_cost = tour_cost;
         }
     }
 
     else {
 
-        for (int i = level; i < order; i++) {
+        //Instanciar un nodo y sacar los nodos vecinos al cual puede viajar
+        int instance_node = partial_tour.back();
 
-            double distanceTemp = *partial_tour_cost + adjMatrix[partial_tour[level - 1]][partial_tour[i]];
-            enum STATE status = evaluatorFunction(info, *best_tour_cost, distanceTemp);
+        tuple<vector<int>, vector<int>, vector<int>> results = evaluatorFunction(info, adjMatrix,
+                                                                                 clients, best_tour_cost,
+                                                                                 instance_node);
 
-            if(*best_tour_cost == 0 || status == BETTER_ROUTE)
-            {
+        for(int candidatesNode : get<0>(results)){
 
-                swap(&partial_tour[level], &partial_tour[i]);
+            double distanceTemp = adjMatrix[instance_node][candidatesNode];
 
-                double cost = adjMatrix[partial_tour[level - 1]][partial_tour[level]];
-                *partial_tour_cost += cost;
-                ++count;
+            vector<int> clients_temp = clients;
+            struct IFWProblem info_temp = info;
 
-                G_VRP_BT_FC(adjMatrix, info, order, best_tour, best_tour_cost,
-                            partial_tour, AFS_nodes, partial_tour_cost, level + 1, count);
+            applyCharges(info, distanceTemp);
+            partial_tour_cost += distanceTemp;
+            partial_tour.push_back(candidatesNode);
+            clients.erase(remove(clients.begin(), clients.end(), candidatesNode),
+                          clients.end());
+            ++count;
 
-                *partial_tour_cost -= cost;
-                swap(&partial_tour[level], &partial_tour[i]);
-            }
-            else if (status == NO_GAS){
+            G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
+                        partial_tour, partial_tour_cost, level + 1, order, count);
 
-                swap(&partial_tour[level], &partial_tour[i]);
+            partial_tour_cost -= distanceTemp;
+            partial_tour.pop_back();
+            clients = clients_temp;
+            info = info_temp;
 
-                tuple<int,double> results = fuelRecharge(info,adjMatrix,AFS_nodes, partial_tour[level - 1]);
-
-                double cost =  get<1>(results);
-                *partial_tour_cost += cost;
-                ++count;
-
-                vector<int> partial_tour2 = insertAFS(partial_tour, partial_tour[level - 1], get<0>(results));
-
-                G_VRP_BT_FC(adjMatrix, info, order + 1, best_tour, best_tour_cost,
-                            partial_tour2, AFS_nodes,partial_tour_cost, level + 1, count);
-
-                *partial_tour_cost -= cost;
-                swap(&partial_tour[level], &partial_tour[i]);
-
-            }
         }
+
+        for(int AFSRequiredNode : get<1>(results)){
+
+            tuple<int,double> resultsTemp = fuelRecharge(info,adjMatrix,
+                                                     AFS_nodes, instance_node, AFSRequiredNode);
+            int AFS_index = get<0>(resultsTemp);
+            double cost_temp = get<1>(resultsTemp);
+
+            if(AFS_index > 0 && cost_temp > 0) {
+
+                vector<int> clients_temp = clients;
+                vector<int> partial_tour_temp = partial_tour;
+                struct IFWProblem info_temp = info;
+
+                applyCharges(info, cost_temp);
+
+                partial_tour_cost += cost_temp;
+                partial_tour.push_back(AFS_index);
+                partial_tour.push_back(AFSRequiredNode);
+                clients.erase(remove(clients.begin(), clients.end(), AFSRequiredNode),
+                              clients.end());
+                ++count;
+
+                G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
+                            partial_tour, partial_tour_cost, level + 1, order + 1, count);
+
+                partial_tour_cost -= cost_temp;
+                partial_tour = partial_tour_temp;
+                clients = clients_temp;
+                info = info_temp;
+            }
+
+        }
+
+        //Probar cada uno de los nodos que estan disponibles en clients con instance_node
+        /*for(int client_index: clients){
+
+            double distanceTemp = adjMatrix[instance_node][client_index];
+
+            enum STATE status = evaluatorFunction(info, best_tour_cost, distanceTemp);
+
+            switch (status) {
+
+                case NO_GAS: {
+
+
+                    tuple<int,double> results = fuelRecharge(info,adjMatrix,
+                                                             AFS_nodes, instance_node, client_index);
+                    int AFS_index = get<0>(results);
+                    double cost_temp = get<1>(results);
+
+                    if(AFS_index > 0 && cost_temp > 0){
+
+                        vector<int> clients_temp = clients;
+                        vector<int> partial_tour_temp = partial_tour;
+
+                        partial_tour_cost += cost_temp;
+                        partial_tour.push_back(AFS_index);
+                        partial_tour.push_back(client_index);
+                        clients.erase(remove(clients.begin(), clients.end(), client_index),
+                                      clients.end());
+                        ++count;
+
+                        G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
+                                    partial_tour, partial_tour_cost, level + 1, order + 1, count);
+
+                        partial_tour_cost -= cost_temp;
+                        partial_tour = partial_tour_temp;
+                        clients = clients_temp;
+
+                    } else  continue;
+                }
+
+                case TIME_OUT:
+                    continue;
+
+                case BETTER_ROUTE: {
+
+                            vector<int> clients_temp = clients;
+
+                            partial_tour_cost += distanceTemp;
+                            partial_tour.push_back(client_index);
+                            clients.erase(remove(clients.begin(), clients.end(), client_index),
+                            clients.end());
+                            ++count;
+
+                            G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
+                                        partial_tour, partial_tour_cost, level + 1, order, count);
+
+                            partial_tour_cost -= distanceTemp;
+                            partial_tour.pop_back();
+                            clients = clients_temp;
+
+                    }
+
+                case WORST_ROUTE:
+                    continue;
+            }
+        }*/
     }
 }
 
@@ -149,8 +254,11 @@ double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFW
     double partial_tour_cost = 0;
     vector<int> clients;
     vector<int> AFS_nodes;
+    vector<int> partial_tour;
 
-    for (int i = 0; i < order; i++) {
+    partial_tour.push_back(0); //Comenzamos en el nodo DEPOT (index 0)
+
+    for (int i = 1; i < order; i++) {
         if(nodes[i].Type != "f"){
             clients.push_back(i);
         } else {
@@ -158,8 +266,7 @@ double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFW
         }
     }
 
-    /*clients.push_back(0);
-    clients.push_back(1);
+    /*clients.push_back(1);
     clients.push_back(2);
     clients.push_back(3);
     clients.push_back(4);
@@ -170,11 +277,14 @@ double G_VRP(vector<vector<double>> &adjMatrix, vector<TNode> &nodes, struct IFW
     AFS_nodes.push_back(8);
     AFS_nodes.push_back(9);*/
 
-    G_VRP_BT_FC(adjMatrix, info, clients.size(), best_tour, &best_tour_cost, clients, AFS_nodes,
-                &partial_tour_cost, 1, count);
+    G_VRP_BT_FC(adjMatrix, info, clients, AFS_nodes, best_tour, best_tour_cost,
+                partial_tour, partial_tour_cost, 1, order, count);
 
     clients.clear();
     AFS_nodes.clear();
+    partial_tour.clear();
 
     return best_tour_cost;
 }
+
+

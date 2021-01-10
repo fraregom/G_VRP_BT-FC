@@ -1,9 +1,12 @@
 ID      Type    Longitude       Latitude
 D	d	2.0	-3.0
-BD12	f	6.0	4.0
-C1	c	3.0	2.0
 C2	c	3.2	5.0
 C3	c	6.0	-3.0
+BD12	f	6.0	4.0
+C1	c	3.0	2.0
+
+
+
 
 Q Vehicle fuel tank capacity /50/
 r fuel consumption rate /0.2/
