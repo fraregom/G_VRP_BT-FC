@@ -1,10 +1,11 @@
 #include "functions.h"
 
 /*!
+ * Función encargada de "dividir" un string según delimitador
  *
- * @param str
- * @param delimiter
- * @return
+ * @param str: String que se desea dividir
+ * @param delimiter: Delimitador que se quiere utilizar.
+ * @return vector<string>: Vector string con el resultado de la división.
  */
 vector<string> split_string(const string& str,
                                  const string& delimiter)
@@ -26,9 +27,9 @@ vector<string> split_string(const string& str,
 }
 
 /*!
- *
- * @param degree
- * @return
+ * Función encargada de convertir grados en radianes.
+ * @param degree: grados a convertir.
+ * @return double, resultado de la conversión.
  */
 double to_radians(double degree)
 {
@@ -36,10 +37,10 @@ double to_radians(double degree)
 }
 
 /*!
- *
- * @param sNode
- * @param eNode
- * @return
+ * Función encargada de encontrar la distancia entre dos puntos distantes según la curvatura de la tierra.
+ * @param sNode: Nodo inicial
+ * @param eNode: Nodo final.
+ * @return double, retorna la distancia entre los nodos (arco).
  */
 double haversine_distance(TNode &sNode, TNode &eNode){
 
@@ -56,33 +57,20 @@ double haversine_distance(TNode &sNode, TNode &eNode){
     return distance;
 }
 
-double simple_distance(TNode &sNode, TNode &eNode)
-{
-    double x1 = sNode.Longitude;
-    double y1 = sNode.Latitude;
-    double x2 = eNode.Longitude;
-    double y2 = eNode.Latitude;
-
-    // Calculating distance
-    return sqrt(pow(x2 - x1, 2) +
-                pow(y2 - y1, 2) * 1.0);
-}
-
 /*!
- *
- * @param nodes
- * @return
+ * Función encargad de crear y poblar una matrix con los arcos (distancia) resultantes entre dos nodos.
+ * @param nodes: Vector con todos los nodos que se requiere calcular sus distancias.
+ * @return vector<vector<double>>: Retorna un vector 2D que contiene los arcos entre nodos de la instancia.
  */
 vector<vector<double>> distance_matrix(vector<TNode> &nodes){
 
     vector<vector<double>> matrix ( nodes.size(), vector<double>( nodes.size()));
 
-    for (int i = 0; i < nodes.size(); i++)
+    for (unsigned int i = 0; i < nodes.size(); i++)
     {
-        for (int j = 0; j < nodes.size(); j++)
+        for (unsigned int j = 0; j < nodes.size(); j++)
         {
-            //matrix[i][j] = haversine_distance(nodes[i],nodes[j]);
-            matrix[i][j] = simple_distance(nodes[i],nodes[j]);
+            matrix[i][j] = haversine_distance(nodes[i],nodes[j]);
         }
     }
 

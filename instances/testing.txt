@@ -9,8 +9,8 @@ C3	c	6.0	-3.0
 
 
 
-Q Vehicle fuel tank capacity /50/
+Q Vehicle fuel tank capacity /50000000000000000/
 r fuel consumption rate /0.2/
-TL TourLength /12/
+TL TourLength /11/
 v average Velocity /50/
 m numVeh /3/
