@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
 
         ifwProblem.Q = vectorAux[0];
         ifwProblem.r = vectorAux[1];
-        ifwProblem.TL = 10000000;//vectorAux[2];
+        ifwProblem.TL = 24;//vectorAux[2];
         ifwProblem.v = vectorAux[3];
         ifwProblem.m = vectorAux[4];
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
         distanceMatrix = distance_matrix(nodeList);
 
         time(&start);
-        printf("G-VRP usando BC-FC (SIN Restricción de tiempo)..\n");
+        printf("G-VRP usando BC-FC (Con Restricción de tiempo: 24 h)..\n");
 
         /* Llamamos a la función G_VRP, esta se encargara de encontrar la ruta optima, le pasamos los datos
          * referentes al problema, un vector best_tour encargado de almacenar la solución final como también
