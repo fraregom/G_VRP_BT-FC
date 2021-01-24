@@ -1,4 +1,4 @@
-# Implementación de G-VRP (Primera iteración)
+# Implementación de G-VRP mediante Backtracking/Forward Checking (Primera iteración)
 
 Para ejecutar el programa simplemente se debe hacer lo siguiente (tras compilar mediante makefile):
 
