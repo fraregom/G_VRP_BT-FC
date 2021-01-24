@@ -1,6 +1,0 @@
-cmake_minimum_required(VERSION 3.17)
-project(Proyecto_GVRP)
-
-set(CMAKE_CXX_STANDARD 20)
-
-add_executable(Proyecto_GVRP main.cpp node.cpp node.h functions.cpp functions.h CSP_Algorithm.cpp CSP_Algorithm.h)
